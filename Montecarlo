@@ -1,0 +1,50 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# variáveis que podem ser trocadas para inputs
+confidence_level = 0.95
+num_simulations = 1000
+volatility = 0.009
+expected_return = 0.0005
+time_interval = 1
+num_trading_days = 252
+time_step = time_interval/num_trading_days
+
+# variaveis iniciais
+price_series = np.zeros([num_simulations, num_trading_days])
+initial_price = 1
+
+#funcao de geracao de variaveis aleatorias
+
+def generate_random_variable():
+    """
+    gerar uma distribuicao aleatória com uma distribuicao t de student
+    """
+    return np.random.standard_t(3)
+#funcao de simulacao monte carlo
+
+def simulate_monte_carlo(price_series,num_simulations, time_interval, expected_return, volatility,time_step):
+    
+    for n in range(num_simulations):
+        price_series[n, 0] = initial_price
+        for t in range(num_trading_days-1):
+            z = generate_random_variable()
+            price_series[n, t+1] = price_series[n, t]*np.exp((expected_return-0.5*volatility**2)*time_step+(volatility*np.sqrt(time_step)*z))
+    return price_series
+
+
+## calculo de VaR
+def calculate_var(price_series,confidence_level):
+    
+    return np.percentile(price_series, (1-confidence_level)*100)
+
+# realiza simulacao de monte carlo
+simulated_prices = simulate_monte_carlo(price_series,num_simulations, time_interval, expected_return, volatility,time_step)
+
+# Calcular VaR
+var = calculate_var(simulated_prices[:,-1],confidence_level)
+print("Value at Risk (VaR) com um nível de confiança de {}: {}".format(confidence_level, var))
+
+# plotar gráfico de simulacao 
+for n in range(num_simulations):
+    plt.plot(simulated_prices[n])
